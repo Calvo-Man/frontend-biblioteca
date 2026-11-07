@@ -364,7 +364,6 @@ function closeMobileDrawer() {
         drawer.value = false;
     }
 }
-
 async function loadOverdueLoans() {
     if (notificationsLoading.value) return;
 
@@ -373,13 +372,13 @@ async function loadOverdueLoans() {
     try {
         const response = await reportsService.getOverdueLoans();
 
-        const result = response.data;
-
-        overdueLoans.value = Array.isArray(result?.data)
-            ? result.data
+        overdueLoans.value = Array.isArray(response?.data)
+            ? response.data
             : [];
 
-        overdueCount.value = Number(result?.total ?? overdueLoans.value.length);
+        overdueCount.value = Number(
+            response?.total ?? overdueLoans.value.length
+        );
     } catch (error) {
         console.error('Error al cargar préstamos vencidos:', error);
     } finally {
