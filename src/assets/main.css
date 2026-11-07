@@ -1,0 +1,125 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* ==============================
+   VARIABLES GLOBALES
+================================= */
+
+:root {
+  font-family: 'Inter', sans-serif;
+  color: #1b2533;
+  background: #f4f6fa;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  --color-primary: #123b5d;
+  --color-secondary: #1d5278;
+  --color-accent: #f4b323;
+  --color-background: #f4f6fa;
+  --color-surface: #ffffff;
+  --color-text: #1b2533;
+  --color-muted: #718096;
+}
+
+/* ==============================
+   REINICIO GENERAL
+================================= */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  width: 100%;
+  min-width: 320px;
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  min-height: 100vh;
+  font-family: 'Inter', sans-serif;
+  background-color: var(--color-background);
+}
+
+/* ==============================
+   ELEMENTOS GENERALES
+================================= */
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+/* ==============================
+   CONTENEDORES
+================================= */
+
+.page-container {
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.section-title {
+  color: var(--color-primary);
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.text-muted {
+  color: var(--color-muted);
+}
+
+/* ==============================
+   SCROLLBAR
+================================= */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #edf0f5;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #bdc8d5;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #8c9bad;
+}
+
+/* ==============================
+   RESPONSIVE
+================================= */
+
+@media (max-width: 600px) {
+  .page-container {
+    padding: 16px;
+  }
+
+  .section-title {
+    font-size: 1.25rem;
+  }
+}
