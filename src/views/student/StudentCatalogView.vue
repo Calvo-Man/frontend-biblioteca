@@ -41,11 +41,11 @@
       </v-btn>
     </v-card>
 
-    <!-- Resultados -->
+    <!-- Encabezado de resultados -->
     <div class="results-heading">
       <div>
         <h2>Explorar colección</h2>
-        <span>{{ totalBooks }} resultados encontrados</span>
+        <span>{{ totalBooks }} libros encontrados</span>
       </div>
     </div>
 
@@ -67,6 +67,7 @@
       class="mb-5"
     >
       {{ error }}
+
       <template #append>
         <v-btn variant="text" @click="loadBooks">
           Reintentar
@@ -74,97 +75,140 @@
       </template>
     </v-alert>
 
-    <!-- Catálogo -->
     <template v-else>
-      <v-row v-if="books.length" class="books-grid">
-        <v-col
-          v-for="book in books"
-          :key="book.id"
-          cols="12"
-          sm="6"
-          md="4"
-          lg="3"
-        >
-          <v-card class="book-card" elevation="0">
-            <div class="book-cover-container">
-              <v-img
-                v-if="book.cover_image"
-                :src="getCoverUrl(book.cover_image)"
-                class="book-cover"
-                cover
-                height="230"
+      <!-- Lista de libros -->
+      <v-card
+        v-if="books.length"
+        class="catalog-table-card"
+        elevation="0"
+      >
+        <div class="table-scroll">
+          <v-table class="catalog-table">
+            <thead>
+              <tr>
+                <th class="book-column">LIBRO</th>
+                <th>CATEGORÍA</th>
+                <th>DISPONIBILIDAD</th>
+                <th>ESTADO</th>
+                <th class="actions-column">ACCIONES</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr
+                v-for="book in books"
+                :key="book.id"
               >
-                <template #error>
-                  <div class="cover-placeholder">
-                    <v-icon
-                      icon="mdi-book-open-page-variant"
-                      size="65"
-                    />
+                <!-- Libro -->
+                <td>
+                  <div class="book-cell">
+                    <div class="book-thumbnail">
+                      <v-img
+                        v-if="book.cover_image"
+                        :src="getCoverUrl(book.cover_image)"
+                        width="48"
+                        height="62"
+                        cover
+                      >
+                        <template #error>
+                          <div class="thumbnail-placeholder">
+                            <v-icon
+                              icon="mdi-book-open-page-variant"
+                              size="23"
+                            />
+                          </div>
+                        </template>
+                      </v-img>
+
+                      <div
+                        v-else
+                        class="thumbnail-placeholder"
+                      >
+                        <v-icon
+                          icon="mdi-book-open-page-variant"
+                          size="23"
+                        />
+                      </div>
+                    </div>
+
+                    <div class="book-description">
+                      <strong>{{ book.title }}</strong>
+                      <span>
+                        <v-icon
+                          icon="mdi-account-outline"
+                          size="14"
+                        />
+                        {{ book.author || 'Autor no registrado' }}
+                      </span>
+                    </div>
                   </div>
-                </template>
-              </v-img>
+                </td>
 
-              <div v-else class="cover-placeholder">
-                <v-icon
-                  icon="mdi-book-open-page-variant"
-                  size="65"
-                />
-                <span>Sin portada</span>
-              </div>
+                <!-- Categoría -->
+                <td>
+                  <span class="category-label">
+                    {{ book.category?.name || 'Sin categoría' }}
+                  </span>
+                </td>
 
-              <v-chip
-                class="availability-chip"
-                :color="book.available_copies > 0 ? 'success' : 'error'"
-                size="small"
-                variant="flat"
-              >
-                {{
-                  book.available_copies > 0
-                    ? 'Disponible'
-                    : 'No disponible'
-                }}
-              </v-chip>
-            </div>
+                <!-- Disponibilidad -->
+                <td>
+                  <div class="availability-cell">
+                    <v-icon
+                      icon="mdi-book-multiple-outline"
+                      size="18"
+                    />
+                    <strong>{{ book.available_copies || 0 }}</strong>
+                    <span>
+                      {{
+                        book.available_copies === 1
+                          ? 'ejemplar'
+                          : 'ejemplares'
+                      }}
+                    </span>
+                  </div>
+                </td>
 
-            <v-card-text class="book-info">
-              <div class="book-category">
-                {{ book.category?.name || 'Sin categoría' }}
-              </div>
+                <!-- Estado -->
+                <td>
+                  <v-chip
+                    :color="book.available_copies > 0 ? 'success' : 'error'"
+                    variant="tonal"
+                    size="small"
+                  >
+                    {{
+                      book.available_copies > 0
+                        ? 'Disponible'
+                        : 'No disponible'
+                    }}
+                  </v-chip>
+                </td>
 
-              <h3>{{ book.title }}</h3>
+                <!-- Acciones -->
+                <td>
+                  <v-btn
+                    color="primary"
+                    variant="outlined"
+                    size="small"
+                    class="details-button"
+                    prepend-icon="mdi-eye-outline"
+                    @click="openBookDetails(book)"
+                  >
+                    Ver detalles
+                  </v-btn>
+                </td>
+              </tr>
+            </tbody>
+          </v-table>
+        </div>
 
-              <p class="book-author">
-                <v-icon icon="mdi-account-outline" size="15" />
-                {{ book.author }}
-              </p>
-
-              <div class="book-availability">
-                <v-icon
-                  icon="mdi-book-multiple-outline"
-                  size="17"
-                />
-                {{ book.available_copies }}
-                {{ book.available_copies === 1 ? 'ejemplar disponible' : 'ejemplares disponibles' }}
-              </div>
-
-              <v-btn
-                block
-                variant="outlined"
-                color="primary"
-                class="details-button"
-                @click="openBookDetails(book)"
-              >
-                Ver detalles
-                <v-icon
-                  icon="mdi-arrow-right"
-                  end
-                  size="17"
-                />
-              </v-btn>
-            </v-card-text>
-          </v-card>
-        </v-col>
-      </v-row>
+        <!-- Pie de tabla -->
+        <div class="table-footer">
+          <span>
+            Mostrando {{ books.length }} de {{ totalBooks }} libros
+          </span>
+        </div>
+      </v-card>
 
       <!-- Sin resultados -->
       <div v-else class="empty-state">
@@ -172,7 +216,9 @@
           icon="mdi-book-search-outline"
           size="75"
         />
+
         <h3>No encontramos libros</h3>
+
         <p>
           No hay libros que coincidan con tu búsqueda.
           Intenta con otro título o autor.
@@ -244,7 +290,10 @@
                 </template>
               </v-img>
 
-              <div v-else class="cover-placeholder details-placeholder">
+              <div
+                v-else
+                class="cover-placeholder details-placeholder"
+              >
                 <v-icon
                   icon="mdi-book-open-page-variant"
                   size="65"
@@ -295,20 +344,27 @@
 
             <div>
               <span>Año de publicación</span>
-              <strong>{{ selectedBook.publication_year || 'No registrado' }}</strong>
+              <strong>
+                {{ selectedBook.publication_year || 'No registrado' }}
+              </strong>
             </div>
           </div>
 
           <div class="description-section">
             <h3 class="section-title">Descripción</h3>
+
             <p>
-              {{ selectedBook.description || 'Este libro no tiene una descripción registrada.' }}
+              {{
+                selectedBook.description ||
+                'Este libro no tiene una descripción registrada.'
+              }}
             </p>
           </div>
         </v-card-text>
 
         <v-card-actions class="dialog-actions">
           <v-spacer />
+
           <v-btn
             color="primary"
             variant="flat"
@@ -408,6 +464,7 @@ onMounted(() => {
   width: 100%;
 }
 
+/* Encabezado */
 .page-heading {
   display: flex;
   align-items: center;
@@ -445,6 +502,7 @@ onMounted(() => {
   border-radius: 12px;
   color: #173a56;
   border: 1px solid #e9edf2;
+  flex-shrink: 0;
 }
 
 .total-books strong {
@@ -458,6 +516,7 @@ onMounted(() => {
   color: #89939f;
 }
 
+/* Búsqueda */
 .search-card {
   display: flex;
   align-items: center;
@@ -472,6 +531,7 @@ onMounted(() => {
   flex: 1;
 }
 
+/* Resultados */
 .results-heading {
   display: flex;
   align-items: center;
@@ -492,103 +552,145 @@ onMounted(() => {
   margin-top: 3px;
 }
 
-.books-grid {
-  row-gap: 8px;
-}
-
-.book-card {
-  height: 100%;
+/* Tabla */
+.catalog-table-card {
   border: 1px solid #e9edf2;
   border-radius: 13px;
   overflow: hidden;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  background: #fff;
 }
 
-.book-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 22px rgba(20, 49, 72, 0.09);
+.table-scroll {
+  width: 100%;
+  overflow-x: auto;
 }
 
-.book-cover-container {
-  position: relative;
-  background: #eef2f6;
+.catalog-table {
+  min-width: 850px;
 }
 
-.book-cover {
-  background: #eef2f6;
+.catalog-table :deep(thead) {
+  background: #f7f9fb;
 }
 
-.cover-placeholder {
-  height: 230px;
+.catalog-table :deep(th) {
+  height: 52px !important;
+  color: #788796 !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.7px;
+  white-space: nowrap;
+}
+
+.catalog-table :deep(td) {
+  height: 85px !important;
+  color: #334b60;
+  font-size: 13px;
+}
+
+.catalog-table :deep(tbody tr:hover) {
+  background: #fafbfd;
+}
+
+.book-column {
+  width: 34%;
+  min-width: 280px;
+}
+
+.actions-column {
+  width: 150px;
+}
+
+.book-cell {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 13px;
+  min-width: 250px;
+}
+
+.book-thumbnail {
+  width: 48px;
+  height: 62px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 5px;
+  background: #eef2f6;
+  border: 1px solid #e9edf2;
+}
+
+.thumbnail-placeholder {
+  width: 48px;
+  height: 62px;
+  display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
   color: #9aa8b5;
   background: #eef2f6;
 }
 
-.cover-placeholder span {
-  font-size: 12px;
+.book-description {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
 }
 
-.availability-chip {
-  position: absolute;
-  top: 12px;
-  right: 10px;
-  z-index: 2;
-}
-
-.book-info {
-  padding: 17px;
-}
-
-.book-category {
-  color: #b18a28;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 8px;
-}
-
-.book-info h3 {
+.book-description strong {
   color: #173a56;
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 700;
   line-height: 1.4;
-  min-height: 44px;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  max-width: 300px;
 }
 
-.book-author {
+.book-description span {
   display: flex;
   align-items: center;
-  gap: 5px;
-  color: #7b8794;
-  font-size: 12px;
-  margin-top: 9px;
-}
-
-.book-availability {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  color: #657586;
+  gap: 4px;
+  color: #89939f;
   font-size: 11px;
-  margin-top: 16px;
-  margin-bottom: 15px;
+}
+
+.category-label {
+  color: #657586;
+  font-size: 12px;
+}
+
+.availability-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #657586;
+  white-space: nowrap;
+}
+
+.availability-cell strong {
+  color: #173a56;
+  font-size: 14px;
+}
+
+.availability-cell span {
+  font-size: 11px;
 }
 
 .details-button {
   text-transform: none;
   font-weight: 600;
   letter-spacing: 0;
+  white-space: nowrap;
 }
 
+.table-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 13px 20px;
+  border-top: 1px solid #edf0f3;
+  color: #89939f;
+  font-size: 11px;
+}
+
+/* Estados */
 .loading-container {
   min-height: 280px;
   display: flex;
@@ -629,6 +731,7 @@ onMounted(() => {
   padding: 25px 0 10px;
 }
 
+/* Diálogo de detalles */
 .dialog-header {
   display: flex;
   justify-content: space-between;
@@ -651,6 +754,21 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
+.cover-placeholder {
+  height: 230px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #9aa8b5;
+  background: #eef2f6;
+}
+
+.cover-placeholder span {
+  font-size: 12px;
+}
+
 .details-placeholder {
   width: 180px;
   height: 260px;
@@ -660,6 +778,15 @@ onMounted(() => {
 .details-information {
   flex: 1;
   min-width: 0;
+}
+
+.book-category {
+  color: #b18a28;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
 }
 
 .details-information h2 {
@@ -721,6 +848,7 @@ onMounted(() => {
   padding: 12px 20px;
 }
 
+/* Responsive */
 @media (max-width: 600px) {
   .page-heading {
     align-items: flex-start;

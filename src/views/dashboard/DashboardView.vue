@@ -14,34 +14,69 @@
       {{ errorMessage }}
     </v-alert>
 
-    <!-- Bienvenida -->
-    <v-card class="welcome-card mb-5" rounded="lg" elevation="0">
-      <v-card-text class="welcome-content">
-        <div class="welcome-text">
-          <span class="welcome-eyebrow">
-            SISTEMA DE BIBLIOTECA ESCOLAR
-          </span>
+    <!-- Banner institucional -->
+    <v-card class="welcome-card mb-4" rounded="xl" elevation="0">
+      <div class="welcome-decoration"></div>
 
-          <h2>
-            ¡Bienvenido, {{ adminName }}!
-          </h2>
+      <div class="welcome-content">
+        <div class="welcome-text">
+          <div class="institution-label">
+            <v-icon icon="mdi-school" size="13" />
+            INSTITUCIÓN EDUCATIVA SANTA TERESITA · SAN PELAYO
+          </div>
+
+          <h1>Bienvenido, {{ adminName }}</h1>
 
           <p>
-            Aquí tienes un resumen del estado actual de la biblioteca.
+            Sistema Integral de Biblioteca Escolar. Administra los préstamos,
+            registra las devoluciones y consulta la disponibilidad del
+            material bibliográfico de la institución.
           </p>
+
+          <div class="welcome-actions">
+            <v-btn
+              color="#F4B323"
+              class="primary-action"
+              prepend-icon="mdi-book-plus-outline"
+              to="/loans"
+              elevation="0"
+            >
+              Registrar préstamo
+            </v-btn>
+
+            <v-btn
+              variant="outlined"
+              color="white"
+              prepend-icon="mdi-magnify"
+              to="/books"
+              class="secondary-action"
+            >
+              Consultar disponibilidad
+            </v-btn>
+          </div>
+
+          <div class="current-date">
+            <v-icon icon="mdi-calendar-month-outline" size="14" />
+            {{ currentDate }}
+          </div>
         </div>
 
-        <div class="welcome-icon">
-          <v-icon icon="mdi-bookshelf" size="30" />
+        <div class="institution-brand">
+          <div class="brand-emblem">
+            <v-icon icon="mdi-book-open-page-variant" size="35" />
+          </div>
+
+          <strong>INESANTE</strong>
+          <span>Virtual y Ciencia</span>
         </div>
-      </v-card-text>
+      </div>
     </v-card>
 
-    <!-- Estadísticas -->
+    <!-- Estadísticas principales -->
     <div class="section-heading">
       <div>
-        <h2>Resumen de la biblioteca</h2>
-        <p>Indicadores generales del sistema</p>
+        <h2>Resumen general</h2>
+        <p>Estado actual de la biblioteca escolar</p>
       </div>
     </div>
 
@@ -53,28 +88,30 @@
         sm="6"
         lg="3"
       >
-        <v-card class="stat-card" rounded="lg" elevation="0">
+        <v-card class="stat-card" rounded="xl" elevation="0">
           <v-card-text class="stat-content">
             <div class="stat-information">
               <span class="stat-title">{{ item.title }}</span>
 
-              <template v-if="loading && !hasLoaded">
-                <v-skeleton-loader
-                  type="text"
-                  width="85"
-                  class="stat-skeleton"
-                />
-              </template>
+              <v-skeleton-loader
+                v-if="loading && !hasLoaded"
+                type="text"
+                width="75"
+              />
 
               <strong v-else class="stat-value">
                 {{ formatNumber(item.value) }}
               </strong>
+
+              <span class="stat-description">
+                {{ item.description }}
+              </span>
             </div>
 
             <div
               class="stat-icon"
               :style="{
-                backgroundColor: `${item.color}15`,
+                backgroundColor: item.background,
                 color: item.color
               }"
             >
@@ -85,144 +122,390 @@
       </v-col>
     </v-row>
 
-    <!-- Préstamos recientes -->
-    <div class="section-heading loans-heading">
+    <!-- Circulación e inventario -->
+    <div class="section-heading mt-6">
       <div>
-        <h2>Préstamos recientes</h2>
-        <p>Últimos movimientos registrados en el sistema</p>
+        <h2>Actividad de la biblioteca</h2>
+        <p>Indicadores de circulación e inventario</p>
+      </div>
+    </div>
+
+    <v-row dense>
+      <!-- Circulación -->
+      <v-col cols="12" md="6">
+        <v-card class="content-card" rounded="xl" elevation="0">
+          <v-card-title class="section-card-title">
+            <div class="d-flex align-center ga-2">
+              <v-icon color="primary">mdi-book-sync-outline</v-icon>
+              Estado de circulación
+            </div>
+
+            <v-chip size="small" variant="tonal" color="primary">
+              Préstamos
+            </v-chip>
+          </v-card-title>
+
+          <v-divider />
+
+          <v-card-text class="pa-4">
+            <div class="circulation-item">
+              <div class="circulation-icon active-icon">
+                <v-icon>mdi-book-clock-outline</v-icon>
+              </div>
+
+              <div class="circulation-info">
+                <strong>Préstamos activos</strong>
+                <span>Libros actualmente prestados</span>
+              </div>
+
+              <strong class="circulation-number">
+                {{ formatNumber(statistics.active_loans) }}
+              </strong>
+            </div>
+
+            <v-divider class="my-3" />
+
+            <div class="circulation-item">
+              <div class="circulation-icon overdue-icon">
+                <v-icon>mdi-alert-circle-outline</v-icon>
+              </div>
+
+              <div class="circulation-info">
+                <strong>Préstamos vencidos</strong>
+                <span>Requieren seguimiento</span>
+              </div>
+
+              <strong class="circulation-number text-error">
+                {{ formatNumber(statistics.overdue_loans) }}
+              </strong>
+            </div>
+
+            <v-divider class="my-3" />
+
+            <div class="circulation-item">
+              <div class="circulation-icon returned-icon">
+                <v-icon>mdi-check-circle-outline</v-icon>
+              </div>
+
+              <div class="circulation-info">
+                <strong>Préstamos devueltos</strong>
+                <span>Total de préstamos completados</span>
+              </div>
+
+              <strong class="circulation-number text-success">
+                {{ formatNumber(returnedLoans) }}
+              </strong>
+            </div>
+
+            <v-btn
+              block
+              variant="tonal"
+              color="primary"
+              class="mt-4"
+              to="/loans"
+              rounded="lg"
+            >
+              Consultar préstamos
+              <v-icon end>mdi-arrow-right</v-icon>
+            </v-btn>
+          </v-card-text>
+        </v-card>
+      </v-col>
+
+      <!-- Inventario -->
+      <v-col cols="12" md="6">
+        <v-card class="content-card" rounded="xl" elevation="0">
+          <v-card-title class="section-card-title">
+            <div class="d-flex align-center ga-2">
+              <v-icon color="primary">mdi-bookshelf</v-icon>
+              Estado del inventario
+            </div>
+
+            <v-chip size="small" variant="tonal" color="success">
+              Ejemplares
+            </v-chip>
+          </v-card-title>
+
+          <v-divider />
+
+          <v-card-text class="pa-4">
+            <div class="inventory-total">
+              <div>
+                <span class="text-caption text-medium-emphasis">
+                  Total de ejemplares
+                </span>
+
+                <div class="inventory-number">
+                  {{ formatNumber(statistics.total_copies) }}
+                </div>
+              </div>
+
+              <div class="inventory-main-icon">
+                <v-icon size="30">mdi-book-multiple-outline</v-icon>
+              </div>
+            </div>
+
+            <div class="inventory-progress">
+              <div class="d-flex justify-space-between mb-2">
+                <span class="text-body-2 font-weight-medium">
+                  Disponibilidad
+                </span>
+
+                <strong class="text-body-2">
+                  {{ availabilityPercentage }}%
+                </strong>
+              </div>
+
+              <v-progress-linear
+                :model-value="availabilityPercentage"
+                color="success"
+                bg-color="grey-lighten-3"
+                height="9"
+                rounded
+              />
+            </div>
+
+            <div class="inventory-breakdown">
+              <div class="inventory-legend">
+                <span class="legend-dot available-dot"></span>
+                <div>
+                  <strong>
+                    {{ formatNumber(statistics.available_copies) }}
+                  </strong>
+                  <span>Disponibles</span>
+                </div>
+              </div>
+
+              <div class="inventory-legend">
+                <span class="legend-dot loaned-dot"></span>
+                <div>
+                  <strong>
+                    {{ formatNumber(statistics.loaned_copies) }}
+                  </strong>
+                  <span>Prestados</span>
+                </div>
+              </div>
+            </div>
+
+            <v-btn
+              block
+              variant="tonal"
+              color="primary"
+              class="mt-4"
+              to="/copies"
+              rounded="lg"
+            >
+              Gestionar ejemplares
+              <v-icon end>mdi-arrow-right</v-icon>
+            </v-btn>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+
+    <!-- Últimos préstamos -->
+    <div class="section-heading mt-6">
+      <div>
+        <h2>Últimos préstamos</h2>
+        <p>Movimientos recientes registrados en la biblioteca</p>
       </div>
 
       <v-btn
-        color="primary"
         variant="tonal"
+        color="primary"
         size="small"
-        append-icon="mdi-arrow-right"
+        prepend-icon="mdi-format-list-bulleted"
         to="/loans"
-        class="view-all-button"
       >
-        Ver préstamos
+        Ver todos
       </v-btn>
     </div>
 
-    <v-card class="loans-card" rounded="lg" elevation="0">
-      <v-progress-linear
-        v-if="loading && hasLoaded"
-        indeterminate
-        color="primary"
-        height="2"
-      />
-
-      <div v-if="loading && !hasLoaded" class="loading-table">
+    <v-card class="content-card recent-loans-card" rounded="xl" elevation="0">
+      <div v-if="loading && !hasLoaded" class="pa-4">
         <v-skeleton-loader
           v-for="n in 4"
           :key="n"
           type="list-item-two-line"
-          class="loading-row"
         />
       </div>
 
       <div
-        v-else-if="recentLoans.length"
-        class="table-container"
-      >
-        <v-table class="loans-table" density="comfortable">
-          <thead>
-            <tr>
-              <th>Estudiante</th>
-              <th>Libro</th>
-              <th>Fecha de préstamo</th>
-              <th>Fecha de entrega</th>
-              <th>Estado</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            <tr
-              v-for="loan in recentLoans"
-              :key="loan.id"
-            >
-              <td>
-                <div class="table-primary">
-                  {{ loan.student?.full_name || 'Sin nombre' }}
-                </div>
-
-                <div class="table-secondary">
-                  {{ loan.student?.document_number || 'Sin documento' }}
-                </div>
-              </td>
-
-              <td>
-                <div class="table-primary book-title">
-                  {{ loan.copy?.book?.title || 'Libro no disponible' }}
-                </div>
-
-                <div class="table-secondary">
-                  Código: {{ loan.copy?.copy_code || 'N/A' }}
-                </div>
-              </td>
-
-              <td class="date-cell">
-                {{ formatDate(loan.loan_date) }}
-              </td>
-
-              <td>
-                <span
-                  :class="{
-                    'overdue-date': isOverdue(loan)
-                  }"
-                >
-                  {{ formatDate(loan.due_date) }}
-                </span>
-              </td>
-
-              <td>
-                <v-chip
-                  size="small"
-                  :color="getLoanStatusColor(loan)"
-                  variant="tonal"
-                  class="status-chip"
-                >
-                  <v-icon
-                    :icon="getLoanStatusIcon(loan)"
-                    size="13"
-                    start
-                  />
-                  {{ getLoanStatusLabel(loan) }}
-                </v-chip>
-              </td>
-            </tr>
-          </tbody>
-        </v-table>
-      </div>
-
-      <div
-        v-else
+        v-else-if="recentLoans.length === 0"
         class="empty-state"
       >
-        <div class="empty-icon">
-          <v-icon
-            icon="mdi-book-open-page-variant-outline"
-            size="27"
-          />
-        </div>
+        <v-icon size="42" color="grey-lighten-1">
+          mdi-book-open-page-variant-outline
+        </v-icon>
 
-        <strong>No hay préstamos registrados</strong>
+        <strong>No hay préstamos recientes</strong>
 
-        <p>
+        <span>
           Cuando se registren préstamos, aparecerán aquí.
-        </p>
+        </span>
 
         <v-btn
-          to="/loans"
           color="primary"
           variant="tonal"
-          size="small"
-          class="mt-3"
+          prepend-icon="mdi-plus"
+          to="/loans"
+          rounded="lg"
+          class="mt-2"
         >
-          Ir a préstamos
+          Registrar préstamo
         </v-btn>
       </div>
+
+      <v-table v-else class="recent-loans-table">
+        <thead>
+          <tr>
+            <th>Estudiante</th>
+            <th>Libro</th>
+            <th>Fecha de préstamo</th>
+            <th>Vencimiento</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr
+            v-for="loan in recentLoans"
+            :key="loan.id"
+          >
+            <td>
+              <div class="student-cell">
+                <v-avatar size="34" color="primary" variant="tonal">
+                  <v-icon size="18">mdi-account-outline</v-icon>
+                </v-avatar>
+
+                <div>
+                  <strong>
+                    {{ loan.student?.full_name || 'Sin información' }}
+                  </strong>
+
+                  <span>
+                    {{ loan.student?.document_number || 'Sin documento' }}
+                  </span>
+                </div>
+              </div>
+            </td>
+
+            <td>
+              <div class="book-cell">
+                <strong>
+                  {{ loan.copy?.book?.title || 'Libro no disponible' }}
+                </strong>
+
+                <span>
+                  Ejemplar: {{ loan.copy?.copy_code || 'N/A' }}
+                </span>
+              </div>
+            </td>
+
+            <td>
+              {{ formatDate(loan.loan_date) }}
+            </td>
+
+            <td>
+              <div>
+                {{ formatDate(loan.due_date) }}
+
+                <div
+                  v-if="loan.status === 'ACTIVE' && isOverdue(loan.due_date)"
+                  class="text-caption text-error font-weight-medium"
+                >
+                  Vencido
+                </div>
+              </div>
+            </td>
+
+            <td>
+              <v-chip
+                size="small"
+                variant="tonal"
+                :color="getLoanStatusColor(loan)"
+              >
+                {{ getLoanStatusLabel(loan) }}
+              </v-chip>
+            </td>
+          </tr>
+        </tbody>
+      </v-table>
     </v-card>
+
+    <!-- Accesos rápidos -->
+    <div class="section-heading mt-6">
+      <div>
+        <h2>Accesos rápidos</h2>
+        <p>Funciones principales del sistema</p>
+      </div>
+    </div>
+
+    <v-row dense>
+      <v-col
+        v-for="action in quickActions"
+        :key="action.title"
+        cols="12"
+        sm="6"
+        lg="3"
+      >
+        <v-card
+          class="quick-action-card"
+          rounded="xl"
+          elevation="0"
+          :to="action.to"
+        >
+          <v-card-text class="d-flex align-center ga-3 pa-4">
+            <div
+              class="quick-action-icon"
+              :style="{
+                backgroundColor: action.background,
+                color: action.color
+              }"
+            >
+              <v-icon :icon="action.icon" size="23" />
+            </div>
+
+            <div class="quick-action-info">
+              <strong>{{ action.title }}</strong>
+              <span>{{ action.description }}</span>
+            </div>
+
+            <v-spacer />
+
+            <v-icon color="grey-lighten-1" size="19">
+              mdi-chevron-right
+            </v-icon>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+
+    <!-- Pie del dashboard -->
+    <div v-if="loading && hasLoaded" class="refresh-indicator">
+      <v-progress-linear
+        indeterminate
+        color="primary"
+        height="2"
+      />
+    </div>
+
+    <div class="dashboard-footer">
+      <span>
+        <v-icon icon="mdi-shield-check-outline" size="15" />
+        Sistema de Gestión de Biblioteca Escolar
+      </span>
+
+      <v-btn
+        icon="mdi-refresh"
+        variant="text"
+        color="primary"
+        size="small"
+        title="Actualizar información"
+        :loading="loading"
+        @click="loadDashboard"
+      />
+    </div>
   </div>
 </template>
 
@@ -237,6 +520,8 @@ const loading = ref(false);
 const hasLoaded = ref(false);
 const errorMessage = ref('');
 
+const recentLoans = ref([]);
+
 const statistics = ref({
   total_books: 0,
   total_copies: 0,
@@ -248,62 +533,108 @@ const statistics = ref({
   overdue_loans: 0,
 });
 
-const recentLoans = ref([]);
-
 const adminName = computed(() => {
-  return authStore.user?.username || 'Administrador';
+  return authStore.user?.full_name ||
+    authStore.user?.username ||
+    'Administrador';
+});
+
+const currentDate = computed(() => {
+  return new Date().toLocaleDateString('es-CO', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+});
+
+const returnedLoans = computed(() => {
+  return Math.max(
+    0,
+    Number(statistics.value.total_loans || 0) -
+    Number(statistics.value.active_loans || 0),
+  );
+});
+
+const availabilityPercentage = computed(() => {
+  const totalCopies = Number(statistics.value.total_copies || 0);
+
+  if (!totalCopies) return 0;
+
+  const available = Number(statistics.value.available_copies || 0);
+
+  return Math.min(100, Math.round((available / totalCopies) * 100));
 });
 
 const statisticCards = computed(() => [
   {
-    title: 'Libros registrados',
+    title: 'LIBROS TOTALES',
     value: statistics.value.total_books,
-    icon: 'mdi-book-multiple',
-    color: '#2563EB',
+    description: `${formatNumber(statistics.value.total_copies)} ejemplares registrados`,
+    icon: 'mdi-book-open-page-variant',
+    color: '#1765A0',
+    background: '#EAF3FC',
   },
   {
-    title: 'Total de ejemplares',
-    value: statistics.value.total_copies,
-    icon: 'mdi-bookshelf',
-    color: '#7C3AED',
-  },
-  {
-    title: 'Ejemplares disponibles',
-    value: statistics.value.available_copies,
-    icon: 'mdi-book-check',
-    color: '#16A36A',
-  },
-  {
-    title: 'Ejemplares prestados',
-    value: statistics.value.loaned_copies,
-    icon: 'mdi-book-arrow-right',
-    color: '#D97706',
-  },
-  {
-    title: 'Estudiantes registrados',
-    value: statistics.value.total_students,
-    icon: 'mdi-account-group',
-    color: '#0891B2',
-  },
-  {
-    title: 'Préstamos registrados',
-    value: statistics.value.total_loans,
-    icon: 'mdi-clipboard-list',
-    color: '#6366F1',
-  },
-  {
-    title: 'Préstamos activos',
+    title: 'PRÉSTAMOS ACTIVOS',
     value: statistics.value.active_loans,
-    icon: 'mdi-book-clock',
-    color: '#0D9488',
+    description: `${formatNumber(statistics.value.overdue_loans)} con retraso por revisar`,
+    icon: 'mdi-book-clock-outline',
+    color: '#B17B19',
+    background: '#FFF4D9',
   },
   {
-    title: 'Préstamos vencidos',
-    value: statistics.value.overdue_loans,
-    icon: 'mdi-alert-circle',
-    color: '#DC4545',
+    title: 'ESTUDIANTES REGISTRADOS',
+    value: statistics.value.total_students,
+    description: 'Estudiantes registrados en el sistema',
+    icon: 'mdi-account-group-outline',
+    color: '#64748B',
+    background: '#EDF1F7',
+  },
+  {
+    title: 'LIBROS DISPONIBLES',
+    value: statistics.value.available_copies,
+    description: 'Ejemplares listos para préstamo',
+    icon: 'mdi-book-check-outline',
+    color: '#26966B',
+    background: '#E8F7EF',
   },
 ]);
+
+const quickActions = [
+  {
+    title: 'Registrar préstamo',
+    description: 'Entregar un ejemplar',
+    icon: 'mdi-book-plus-outline',
+    to: '/loans',
+    color: '#1765A0',
+    background: '#EAF3FC',
+  },
+  {
+    title: 'Devoluciones',
+    description: 'Gestionar devoluciones',
+    icon: 'mdi-book-return-outline',
+    to: '/returns',
+    color: '#26966B',
+    background: '#E8F7EF',
+  },
+  {
+    title: 'Consultar libros',
+    description: 'Buscar material bibliográfico',
+    icon: 'mdi-bookshelf',
+    to: '/books',
+    color: '#B17B19',
+    background: '#FFF4D9',
+  },
+  {
+    title: 'Estudiantes',
+    description: 'Consultar estudiantes',
+    icon: 'mdi-account-group-outline',
+    to: '/students',
+    color: '#64748B',
+    background: '#EDF1F7',
+  },
+];
 
 async function loadDashboard() {
   loading.value = true;
@@ -314,10 +645,12 @@ async function loadDashboard() {
 
     statistics.value = {
       ...statistics.value,
-      ...(data.statistics || {}),
+      ...(data?.statistics || {}),
     };
 
-    recentLoans.value = data.recent_loans || [];
+    recentLoans.value = Array.isArray(data?.recent_loans)
+      ? data.recent_loans
+      : [];
   } catch (error) {
     console.error('Error al cargar el dashboard:', error);
 
@@ -337,48 +670,43 @@ function formatNumber(value) {
 function formatDate(date) {
   if (!date) return 'N/A';
 
-  const parsedDate = new Date(date);
+  const parsedDate = new Date(`${String(date).slice(0, 10)}T00:00:00`);
 
   if (Number.isNaN(parsedDate.getTime())) return 'N/A';
 
-  return parsedDate.toLocaleDateString('es-CO', {
+  return new Intl.DateTimeFormat('es-CO', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
-  });
+  }).format(parsedDate);
 }
 
-function isOverdue(loan) {
-  if (loan.status !== 'ACTIVE' || !loan.due_date) return false;
+function isOverdue(dueDate) {
+  if (!dueDate) return false;
 
-  const dueDate = new Date(loan.due_date);
-  dueDate.setHours(23, 59, 59, 999);
+  const due = new Date(`${String(dueDate).slice(0, 10)}T00:00:00`);
+  const today = new Date();
 
-  return dueDate < new Date();
-}
+  today.setHours(0, 0, 0, 0);
 
-function getLoanStatusLabel(loan) {
-  if (loan.status === 'RETURNED') return 'Devuelto';
-  if (isOverdue(loan)) return 'Vencido';
-
-  return 'Activo';
+  return !Number.isNaN(due.getTime()) && due < today;
 }
 
 function getLoanStatusColor(loan) {
   if (loan.status === 'RETURNED') return 'success';
-  if (isOverdue(loan)) return 'error';
 
-  return 'info';
+  return isOverdue(loan.due_date) ? 'error' : 'warning';
 }
 
-function getLoanStatusIcon(loan) {
-  if (loan.status === 'RETURNED') return 'mdi-check-circle-outline';
-  if (isOverdue(loan)) return 'mdi-alert-circle-outline';
+function getLoanStatusLabel(loan) {
+  if (loan.status === 'RETURNED') return 'Devuelto';
 
-  return 'mdi-clock-outline';
+  return isOverdue(loan.due_date) ? 'Vencido' : 'Activo';
 }
 
-onMounted(loadDashboard);
+onMounted(() => {
+  loadDashboard();
+});
 </script>
 
 <style scoped>
@@ -386,51 +714,144 @@ onMounted(loadDashboard);
   width: 100%;
 }
 
-/* Bienvenida */
+/* Banner institucional */
 .welcome-card {
+  position: relative;
   overflow: hidden;
-  background: linear-gradient(110deg, #123b5d 0%, #1d5278 100%);
+  min-height: 192px;
+  background: linear-gradient(112deg, #07518b 0%, #0863a5 55%, #164f80 100%);
+}
+
+.welcome-decoration {
+  position: absolute;
+  top: -95px;
+  right: -55px;
+  width: 260px;
+  height: 260px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.welcome-decoration::after {
+  content: '';
+  position: absolute;
+  inset: 25px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 50%;
 }
 
 .welcome-content {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
-  padding: 22px 25px;
+  gap: 25px;
+  min-height: 192px;
+  padding: 23px 25px;
 }
 
-.welcome-eyebrow {
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1.1px;
+.welcome-text {
+  max-width: 650px;
 }
 
-.welcome-text h2 {
-  margin-top: 5px;
+.institution-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 20px;
+  color: #263648;
+  background: #F4B323;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+}
+
+.welcome-text h1 {
+  margin-top: 12px;
   color: white;
-  font-size: 21px;
-  font-weight: 700;
-  letter-spacing: -0.5px;
+  font-size: 25px;
+  font-weight: 750;
+  letter-spacing: -0.8px;
+  line-height: 1.2;
 }
 
 .welcome-text p {
-  margin-top: 5px;
-  color: rgba(255, 255, 255, 0.78);
+  max-width: 540px;
+  margin-top: 8px;
+  color: rgba(255, 255, 255, 0.85);
   font-size: 12px;
+  line-height: 1.6;
 }
 
-.welcome-icon {
+.welcome-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-top: 16px;
+}
+
+.primary-action {
+  color: #25364a !important;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.secondary-action {
+  border-color: rgba(255, 255, 255, 0.35);
+  color: white !important;
+  font-size: 11px;
+}
+
+.current-date {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 13px;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 10px;
+  text-transform: capitalize;
+}
+
+.institution-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 105px;
+  min-height: 125px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.09);
+  color: white;
+}
+
+.brand-emblem {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 52px;
-  height: 52px;
-  flex-shrink: 0;
-  border-radius: 14px;
-  color: #123b5d;
-  background: #ffffff;
+  width: 58px;
+  height: 58px;
+  margin-bottom: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-radius: 50%;
+  background: linear-gradient(145deg, #1475c1, #064477);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.2);
+}
+
+.institution-brand strong {
+  font-size: 11px;
+  letter-spacing: 0.7px;
+}
+
+.institution-brand span {
+  margin-top: 3px;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 8px;
 }
 
 /* Encabezados de sección */
@@ -439,35 +860,37 @@ onMounted(loadDashboard);
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 13px;
 }
 
 .section-heading h2 {
-  color: #263648;
-  font-size: 14px;
-  font-weight: 700;
+  color: rgb(var(--v-theme-on-surface));
+  font-size: 16px;
+  font-weight: 750;
 }
 
 .section-heading p {
   margin-top: 3px;
-  color: #8995a3;
+  color: #929ba6;
   font-size: 11px;
 }
 
+/* Estadísticas */
 .statistics-grid {
-  margin-bottom: 5px;
+  margin-top: 2px;
 }
 
-/* Estadísticas */
 .stat-card {
   height: 100%;
+  min-height: 110px;
   border: 1px solid #e9edf2;
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  background: #fff;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .stat-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 5px 14px rgba(18, 59, 93, 0.07);
+  box-shadow: 0 5px 15px rgba(18, 59, 93, 0.07);
 }
 
 .stat-content {
@@ -475,202 +898,402 @@ onMounted(loadDashboard);
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  min-height: 91px;
-  padding: 15px 16px;
+  min-height: 110px;
+  padding: 17px 16px;
 }
 
 .stat-information {
   display: flex;
   flex-direction: column;
-  gap: 7px;
   min-width: 0;
 }
 
 .stat-title {
-  color: #7b8795;
-  font-size: 11px;
-  font-weight: 500;
-  line-height: 1.35;
+  color: #929ba6;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.45px;
 }
 
 .stat-value {
-  color: #263648;
-  font-size: 25px;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: -0.7px;
+  margin-top: 5px;
+  color: #19232e;
+  font-size: 27px;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.8px;
+}
+
+.stat-description {
+  margin-top: 6px;
+  color: #98a1ab;
+  font-size: 9px;
+  line-height: 1.4;
 }
 
 .stat-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 42px;
-  height: 42px;
+  width: 43px;
+  height: 43px;
   flex-shrink: 0;
   border-radius: 11px;
 }
 
-.stat-skeleton {
-  width: 85px;
-}
-
-/* Préstamos */
-.loans-heading {
-  margin-top: 25px;
-}
-
-.view-all-button {
-  flex-shrink: 0;
-}
-
-.loans-card {
-  overflow: hidden;
+/* Tarjetas de contenido */
+.content-card {
+  height: 100%;
   border: 1px solid #e9edf2;
-  background: white;
+  background: #fff;
 }
 
-.table-container {
-  width: 100%;
-  overflow-x: auto;
+.section-card-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 17px 18px;
+  font-size: 14px;
+  font-weight: 700;
 }
 
-.loans-table {
-  min-width: 760px;
+.circulation-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.loans-table :deep(th) {
-  height: 43px !important;
-  color: #7b8795 !important;
-  background: #f8fafc;
-  font-size: 10px !important;
-  font-weight: 700 !important;
-  white-space: nowrap;
+.circulation-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 10px;
 }
 
-.loans-table :deep(td) {
-  height: 59px !important;
-  color: #526173;
-  font-size: 11px;
+.active-icon {
+  color: #1765A0;
+  background: #EAF3FC;
 }
 
-.loans-table :deep(tbody tr:hover) {
-  background: #f8fafc;
+.overdue-icon {
+  color: #c44545;
+  background: #FCECEC;
 }
 
-.table-primary {
-  max-width: 230px;
+.returned-icon {
+  color: #26966B;
+  background: #E8F7EF;
+}
+
+.circulation-info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.circulation-info strong {
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.circulation-info span {
+  margin-top: 3px;
+  color: #929ba6;
+  font-size: 10px;
+}
+
+.circulation-number {
+  font-size: 20px;
+  font-weight: 800;
+}
+
+/* Inventario */
+.inventory-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.inventory-number {
+  margin-top: 3px;
+  color: #19232e;
+  font-size: 29px;
+  font-weight: 800;
+}
+
+.inventory-main-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: #EAF3FC;
+  color: #1765A0;
+}
+
+.inventory-progress {
+  margin-top: 23px;
+}
+
+.inventory-breakdown {
+  display: flex;
+  gap: 30px;
+  margin-top: 22px;
+}
+
+.inventory-legend {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.available-dot {
+  background: #26966B;
+}
+
+.loaned-dot {
+  background: #B17B19;
+}
+
+.inventory-legend div {
+  display: flex;
+  flex-direction: column;
+}
+
+.inventory-legend strong {
+  font-size: 14px;
+}
+
+.inventory-legend span:last-child {
+  color: #929ba6;
+  font-size: 10px;
+}
+
+/* Últimos préstamos */
+.recent-loans-card {
   overflow: hidden;
-  color: #263648;
+}
+
+.recent-loans-table {
+  min-width: 750px;
+}
+
+.recent-loans-table :deep(th) {
+  height: 48px !important;
+  color: #929ba6 !important;
+  font-size: 10px !important;
+  font-weight: 750 !important;
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+
+.recent-loans-table :deep(td) {
+  height: 65px !important;
   font-size: 11px;
-  font-weight: 600;
+}
+
+.recent-loans-table :deep(tbody tr:hover) {
+  background: rgba(var(--v-theme-primary), 0.035);
+}
+
+.student-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 180px;
+}
+
+.student-cell div,
+.book-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.student-cell strong,
+.book-cell strong {
+  max-width: 200px;
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 650;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.table-secondary {
-  margin-top: 3px;
-  color: #8995a3;
+.student-cell span,
+.book-cell span {
+  color: #929ba6;
   font-size: 10px;
-}
-
-.book-title {
-  max-width: 220px;
-}
-
-.date-cell {
-  white-space: nowrap;
-}
-
-.overdue-date {
-  color: #dc4545;
-  font-weight: 700;
-}
-
-.status-chip {
-  font-size: 10px;
-  font-weight: 600;
-}
-
-/* Carga y estado vacío */
-.loading-table {
-  padding: 8px 16px;
-}
-
-.loading-row {
-  border-bottom: 1px solid #f0f2f5;
 }
 
 .empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 35px 20px;
+  justify-content: center;
+  gap: 9px;
+  min-height: 220px;
+  padding: 25px;
   text-align: center;
 }
 
-.empty-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 52px;
-  height: 52px;
-  margin-bottom: 12px;
-  border-radius: 14px;
-  color: #8192a5;
-  background: #f1f5f9;
-}
-
 .empty-state strong {
-  color: #334155;
-  font-size: 12px;
+  font-size: 13px;
 }
 
-.empty-state p {
-  margin-top: 5px;
-  color: #94a3b8;
+.empty-state span {
+  color: #929ba6;
   font-size: 11px;
 }
 
-@media (max-width: 600px) {
+/* Accesos rápidos */
+.quick-action-card {
+  height: 100%;
+  border: 1px solid #e9edf2;
+  background: #fff;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.quick-action-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(18, 59, 93, 0.07);
+}
+
+.quick-action-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 43px;
+  height: 43px;
+  flex-shrink: 0;
+  border-radius: 11px;
+}
+
+.quick-action-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 4px;
+}
+
+.quick-action-info strong {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.quick-action-info span {
+  color: #929ba6;
+  font-size: 10px;
+}
+
+/* Pie */
+.refresh-indicator {
+  margin-top: 12px;
+}
+
+.dashboard-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14px;
+  color: #98a1ab;
+  font-size: 10px;
+}
+
+.dashboard-footer span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (max-width: 700px) {
   .welcome-content {
-    padding: 18px;
+    padding: 20px;
   }
 
-  .welcome-text h2 {
-    font-size: 18px;
+  .welcome-text h1 {
+    font-size: 20px;
   }
 
-  .welcome-text p {
-    max-width: 230px;
-    line-height: 1.5;
+  .institution-brand {
+    width: 82px;
+    min-height: 105px;
+    padding: 8px;
   }
 
-  .welcome-icon {
-    width: 43px;
-    height: 43px;
+  .brand-emblem {
+    width: 45px;
+    height: 45px;
+  }
+}
+
+@media (max-width: 600px) {
+  .section-heading {
+    align-items: flex-start;
+  }
+
+  .section-heading h2 {
+    font-size: 15px;
+  }
+
+  .inventory-breakdown {
+    gap: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .welcome-content {
+    align-items: flex-start;
+  }
+
+  .institution-brand {
+    display: none;
+  }
+
+  .welcome-text h1 {
+    font-size: 19px;
+  }
+
+  .institution-label {
+    font-size: 8px;
+  }
+
+  .welcome-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .welcome-actions :deep(.v-btn) {
+    width: 100%;
   }
 
   .stat-content {
-    min-height: 78px;
-    padding: 12px;
+    min-height: 90px;
+    padding: 13px;
   }
 
   .stat-value {
-    font-size: 22px;
+    font-size: 24px;
   }
 
-  .stat-icon {
-    width: 37px;
-    height: 37px;
+  .circulation-number {
+    font-size: 18px;
   }
 
-  .loans-heading {
-    align-items: flex-end;
-  }
-
-  .view-all-button {
-    font-size: 10px;
+  .dashboard-footer {
+    gap: 8px;
   }
 }
 </style>

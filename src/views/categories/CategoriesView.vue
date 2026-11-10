@@ -2,9 +2,9 @@
 <template>
   <div class="page-container">
     <!-- Encabezado -->
-    <div class="d-flex align-center justify-space-between flex-wrap ga-3 mb-5">
+    <div class="page-header">
       <div>
-        <p class="text-body-2 text-medium-emphasis mt-1">
+        <p class="page-description">
           Organiza los libros de la biblioteca por categorías.
         </p>
       </div>
@@ -19,10 +19,23 @@
       </v-btn>
     </div>
 
+    <!-- Error general -->
+    <v-alert
+      v-if="pageError"
+      type="error"
+      variant="tonal"
+      density="compact"
+      closable
+      class="mb-3"
+      @click:close="pageError = ''"
+    >
+      {{ pageError }}
+    </v-alert>
+
     <!-- Búsqueda -->
-    <v-card rounded="lg" elevation="0" border class="mb-4">
+    <v-card class="filter-card mb-3" rounded="lg" elevation="0">
       <v-card-text class="pa-3">
-        <v-row align="center" dense>
+        <v-row dense align="center">
           <v-col cols="12" md="7">
             <v-text-field
               v-model="search"
@@ -38,18 +51,14 @@
           </v-col>
 
           <v-col cols="12" md="5">
-            <div class="d-flex align-center justify-md-end ga-2">
+            <div class="total-categories">
               <v-icon
                 icon="mdi-shape-outline"
                 color="primary"
-                size="20"
+                size="19"
               />
-              <span class="text-body-2 text-medium-emphasis">
-                Total de categorías:
-              </span>
-              <span class="font-weight-bold text-body-1">
-                {{ total }}
-              </span>
+              <span>Total de categorías:</span>
+              <strong>{{ total }}</strong>
             </div>
           </v-col>
         </v-row>
@@ -57,15 +66,13 @@
     </v-card>
 
     <!-- Tabla -->
-    <v-card rounded="lg" elevation="0" border>
-      <div class="d-flex align-center justify-space-between flex-wrap ga-2 px-4 py-3">
+    <v-card class="table-card" rounded="lg" elevation="0">
+      <div class="table-header">
         <div>
-          <div class="font-weight-bold text-body-1">
-            Listado de categorías
-          </div>
-          <div class="text-caption text-medium-emphasis">
-            Administra las categorías disponibles en el catálogo.
-          </div>
+          <span class="table-title">Listado de categorías</span>
+          <span class="table-count">
+            {{ total }} registros
+          </span>
         </div>
 
         <v-chip size="small" color="primary" variant="tonal">
@@ -73,7 +80,12 @@
         </v-chip>
       </div>
 
-      <v-divider />
+      <v-progress-linear
+        v-if="loading"
+        indeterminate
+        color="primary"
+        height="2"
+      />
 
       <div class="table-scroll">
         <v-data-table
@@ -87,96 +99,119 @@
           no-data-text="No hay categorías registradas"
           loading-text="Cargando categorías..."
         >
+          <!-- Nombre -->
           <template #item.name="{ item }">
-            <div class="d-flex align-center ga-2 py-1">
+            <div class="category-cell">
               <v-avatar
                 color="primary"
                 variant="tonal"
-                size="34"
+                size="36"
                 rounded="lg"
               >
-                <v-icon icon="mdi-shape-outline" size="18" />
+                <v-icon icon="mdi-shape-outline" size="19" />
               </v-avatar>
 
-              <span class="font-weight-medium">
+              <span class="category-name">
                 {{ item.name }}
               </span>
             </div>
           </template>
 
+          <!-- Descripción -->
           <template #item.description="{ item }">
-            <span class="text-medium-emphasis description-cell">
+            <span class="description-cell">
               {{ item.description || 'Sin descripción' }}
             </span>
           </template>
 
+          <!-- Estado -->
           <template #item.is_active="{ item }">
             <v-chip
               :color="item.is_active ? 'success' : 'grey'"
-              size="small"
+              size="x-small"
               variant="tonal"
             >
               <v-icon
-                :icon="item.is_active ? 'mdi-check-circle-outline' : 'mdi-minus-circle-outline'"
+                :icon="item.is_active
+                  ? 'mdi-check-circle-outline'
+                  : 'mdi-minus-circle-outline'"
                 start
-                size="14"
+                size="12"
               />
               {{ item.is_active ? 'Activa' : 'Inactiva' }}
             </v-chip>
           </template>
 
+          <!-- Fecha -->
           <template #item.created_at="{ item }">
-            <span class="text-body-2 text-medium-emphasis text-no-wrap">
+            <span class="date-cell">
               {{ formatDate(item.created_at) }}
             </span>
           </template>
 
+          <!-- Acciones -->
           <template #item.actions="{ item }">
-            <div class="d-flex justify-end ga-1">
+            <div class="table-actions">
               <v-tooltip text="Editar categoría">
                 <template #activator="{ props }">
                   <v-btn
                     v-bind="props"
                     icon="mdi-pencil-outline"
-                    size="small"
-                    variant="text"
+                    size="x-small"
+                    variant="tonal"
                     color="primary"
                     @click="openEditDialog(item)"
                   />
                 </template>
               </v-tooltip>
 
-              <v-tooltip :text="item.is_active ? 'Desactivar categoría' : 'Activar categoría'">
+              <v-tooltip
+                :text="item.is_active
+                  ? 'Desactivar categoría'
+                  : 'Activar categoría'"
+              >
                 <template #activator="{ props }">
                   <v-btn
                     v-bind="props"
-                    :icon="item.is_active ? 'mdi-toggle-switch' : 'mdi-toggle-switch-off-outline'"
-                    size="small"
-                    variant="text"
+                    :icon="item.is_active
+                      ? 'mdi-toggle-switch'
+                      : 'mdi-toggle-switch-off-outline'"
+                    size="x-small"
+                    variant="tonal"
                     :color="item.is_active ? 'success' : 'grey'"
                     :loading="changingStatusId === item.id"
                     :disabled="changingStatusId !== null"
-                    @click="toggleStatus(item)"
+                    @click="openStatusDialog(item)"
                   />
                 </template>
               </v-tooltip>
             </div>
           </template>
 
+          <!-- Sin resultados -->
           <template #no-data>
-            <div class="text-center py-8">
+            <div class="empty-state">
               <v-icon
                 icon="mdi-shape-outline"
                 size="38"
                 color="grey-lighten-1"
-                class="mb-2"
               />
-              <div class="text-body-2 font-weight-medium">
-                No se encontraron categorías
-              </div>
-              <div class="text-caption text-medium-emphasis">
-                Prueba con otro término de búsqueda o crea una categoría nueva.
-              </div>
+
+              <strong>No se encontraron categorías</strong>
+
+              <span>
+                Prueba con otro término de búsqueda o registra una categoría nueva.
+              </span>
+
+              <v-btn
+                v-if="search"
+                size="small"
+                color="primary"
+                variant="text"
+                @click="clearSearch"
+              >
+                Limpiar búsqueda
+              </v-btn>
             </div>
           </template>
 
@@ -187,52 +222,66 @@
       <!-- Paginación -->
       <v-divider />
 
-      <div class="d-flex align-center justify-space-between flex-wrap ga-3 pa-3">
-        <div class="text-caption text-medium-emphasis">
+      <div class="pagination">
+        <span class="pagination-info">
           Mostrando {{ categories.length }} de {{ total }} categorías
-        </div>
+        </span>
 
-        <div class="d-flex align-center flex-wrap ga-2">
+        <div class="pagination-controls">
           <v-select
             v-model="limit"
             :items="[5, 10, 20, 50]"
             label="Por página"
-            variant="outlined"
             density="compact"
+            variant="outlined"
             hide-details
-            style="max-width: 125px"
+            class="limit-select"
             @update:model-value="changeLimit"
           />
 
-          <v-pagination
-            v-model="page"
-            :length="totalPages"
-            :total-visible="5"
-            density="compact"
-            rounded="lg"
-            @update:model-value="loadCategories"
+          <span class="pagination-page">
+            Página {{ page }} de {{ totalPages }}
+          </span>
+
+          <v-btn
+            icon="mdi-chevron-left"
+            size="small"
+            variant="tonal"
+            color="primary"
+            :disabled="page <= 1 || loading"
+            @click="changePage(page - 1)"
+          />
+
+          <v-btn
+            icon="mdi-chevron-right"
+            size="small"
+            variant="tonal"
+            color="primary"
+            :disabled="page >= totalPages || loading"
+            @click="changePage(page + 1)"
           />
         </div>
       </div>
     </v-card>
 
-    <!-- Modal crear / editar -->
+    <!-- Crear / editar categoría -->
     <v-dialog
       v-model="dialog"
       max-width="540"
       persistent
     >
       <v-card rounded="lg">
-        <div class="d-flex align-center justify-space-between px-5 pt-4 pb-2">
+        <v-card-title class="dialog-header">
           <div>
-            <div class="text-h6 font-weight-bold">
+            <h3>
               {{ editingCategory ? 'Editar categoría' : 'Nueva categoría' }}
-            </div>
-            <div class="text-caption text-medium-emphasis">
+            </h3>
+
+            <p>
               {{ editingCategory
                 ? 'Modifica la información de esta categoría.'
                 : 'Registra una nueva categoría para organizar los libros.' }}
-            </div>
+            </p>
           </div>
 
           <v-btn
@@ -242,12 +291,17 @@
             :disabled="saving"
             @click="closeDialog"
           />
-        </div>
+        </v-card-title>
 
-        <v-divider class="mt-2" />
+        <v-divider />
 
-        <v-card-text class="pa-5">
+        <v-card-text class="dialog-content">
           <v-form ref="formRef" @submit.prevent="saveCategory">
+            <div class="form-section-title mb-3">
+              <v-icon icon="mdi-shape-outline" size="17" />
+              Información de la categoría
+            </div>
+
             <v-text-field
               v-model="form.name"
               label="Nombre de la categoría *"
@@ -258,7 +312,6 @@
               :rules="nameRules"
               maxlength="100"
               counter="100"
-              autofocus
               hide-details="auto"
             />
 
@@ -281,12 +334,12 @@
 
         <v-divider />
 
-        <v-card-actions class="pa-4">
+        <v-card-actions class="dialog-actions">
           <v-spacer />
 
           <v-btn
             variant="text"
-            color="grey-darken-1"
+            size="small"
             :disabled="saving"
             @click="closeDialog"
           >
@@ -295,11 +348,90 @@
 
           <v-btn
             color="primary"
+            size="small"
             prepend-icon="mdi-content-save-outline"
             :loading="saving"
             @click="saveCategory"
           >
             {{ editingCategory ? 'Guardar cambios' : 'Crear categoría' }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Confirmar cambio de estado -->
+    <v-dialog
+      v-model="statusDialog"
+      max-width="420"
+      persistent
+    >
+      <v-card rounded="lg">
+        <v-card-text class="delete-dialog-content">
+          <v-avatar
+            :color="categoryToChange?.is_active ? 'warning' : 'success'"
+            variant="tonal"
+            size="52"
+            rounded="lg"
+            class="mb-3"
+          >
+            <v-icon
+              :icon="categoryToChange?.is_active
+                ? 'mdi-toggle-switch-off-outline'
+                : 'mdi-toggle-switch'"
+              size="27"
+            />
+          </v-avatar>
+
+          <h3 class="delete-dialog-title">
+            {{ categoryToChange?.is_active
+              ? '¿Desactivar categoría?'
+              : '¿Activar categoría?' }}
+          </h3>
+
+          <p class="delete-dialog-description">
+            ¿Estás seguro de que deseas
+            {{ categoryToChange?.is_active ? 'desactivar' : 'activar' }}
+            la categoría
+            <strong>{{ categoryToChange?.name }}</strong>?
+          </p>
+
+          <v-alert
+            :type="categoryToChange?.is_active ? 'warning' : 'info'"
+            variant="tonal"
+            density="compact"
+            class="mt-4 text-left"
+          >
+            {{ categoryToChange?.is_active
+              ? 'La categoría dejará de estar disponible para nuevas operaciones del catálogo.'
+              : 'La categoría volverá a estar disponible para su uso en el catálogo.' }}
+          </v-alert>
+        </v-card-text>
+
+        <v-divider />
+
+        <v-card-actions class="delete-dialog-actions">
+          <v-spacer />
+
+          <v-btn
+            variant="text"
+            size="small"
+            :disabled="changingStatusId !== null"
+            @click="closeStatusDialog"
+          >
+            Cancelar
+          </v-btn>
+
+          <v-btn
+            :color="categoryToChange?.is_active ? 'warning' : 'success'"
+            variant="flat"
+            size="small"
+            :prepend-icon="categoryToChange?.is_active
+              ? 'mdi-toggle-switch-off-outline'
+              : 'mdi-check'"
+            :loading="changingStatusId !== null"
+            @click="confirmToggleStatus"
+          >
+            {{ categoryToChange?.is_active ? 'Desactivar' : 'Activar' }}
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -331,6 +463,7 @@ import { ref, reactive, onMounted, onUnmounted } from 'vue';
 import { categoriesService } from '../../services/categories';
 
 const categories = ref([]);
+
 const loading = ref(false);
 const saving = ref(false);
 const changingStatusId = ref(null);
@@ -342,8 +475,13 @@ const total = ref(0);
 const totalPages = ref(1);
 
 const dialog = ref(false);
+const statusDialog = ref(false);
+
 const formRef = ref(null);
 const editingCategory = ref(null);
+const categoryToChange = ref(null);
+
+const pageError = ref('');
 
 const form = reactive({
   name: '',
@@ -367,8 +505,8 @@ const headers = [
     title: 'Acciones',
     key: 'actions',
     sortable: false,
-    align: 'end',
-    minWidth: '110px',
+    align: 'center',
+    minWidth: '100px',
   },
 ];
 
@@ -409,6 +547,7 @@ function getErrorMessage(error, fallback) {
 
 async function loadCategories() {
   loading.value = true;
+  pageError.value = '';
 
   try {
     const response = await categoriesService.getAll({
@@ -423,6 +562,11 @@ async function loadCategories() {
 
     total.value = response.total ?? 0;
     totalPages.value = Math.max(1, response.totalPages ?? 1);
+
+    if (page.value > totalPages.value) {
+      page.value = totalPages.value;
+      await loadCategories();
+    }
   } catch (error) {
     console.error('Error al cargar categorías:', error);
 
@@ -430,9 +574,9 @@ async function loadCategories() {
     total.value = 0;
     totalPages.value = 1;
 
-    showMessage(
-      getErrorMessage(error, 'No se pudieron cargar las categorías.'),
-      'error',
+    pageError.value = getErrorMessage(
+      error,
+      'No se pudieron cargar las categorías.',
     );
   } finally {
     loading.value = false;
@@ -448,8 +592,28 @@ function handleSearch() {
   }, 350);
 }
 
+function clearSearch() {
+  clearTimeout(searchTimeout);
+  search.value = '';
+  page.value = 1;
+  loadCategories();
+}
+
 function changeLimit() {
   page.value = 1;
+  loadCategories();
+}
+
+function changePage(newPage) {
+  if (
+    newPage < 1 ||
+    newPage > totalPages.value ||
+    loading.value
+  ) {
+    return;
+  }
+
+  page.value = newPage;
   loadCategories();
 }
 
@@ -467,6 +631,8 @@ function openCreateDialog() {
 }
 
 function openEditDialog(category) {
+  resetForm();
+
   editingCategory.value = category;
 
   form.name = category.name || '';
@@ -524,15 +690,25 @@ async function saveCategory() {
   }
 }
 
-async function toggleStatus(category) {
-  const action = category.is_active ? 'desactivar' : 'activar';
+/* Activar / desactivar categoría */
+function openStatusDialog(category) {
+  categoryToChange.value = category;
+  statusDialog.value = true;
+}
 
-  const confirmed = window.confirm(
-    `¿Estás seguro de que deseas ${action} la categoría "${category.name}"?`,
-  );
+function closeStatusDialog() {
+  if (changingStatusId.value !== null) return;
 
-  if (!confirmed) return;
+  statusDialog.value = false;
+  categoryToChange.value = null;
+}
 
+async function confirmToggleStatus() {
+  if (!categoryToChange.value || changingStatusId.value !== null) {
+    return;
+  }
+
+  const category = categoryToChange.value;
   changingStatusId.value = category.id;
 
   try {
@@ -541,6 +717,9 @@ async function toggleStatus(category) {
     showMessage(
       `Categoría ${category.is_active ? 'desactivada' : 'activada'} correctamente.`,
     );
+
+    statusDialog.value = false;
+    categoryToChange.value = null;
 
     await loadCategories();
   } catch (error) {
@@ -565,37 +744,295 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.page-container {
+  width: 100%;
+}
+
+/* Encabezado */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 17px;
+}
+
+.page-description {
+  margin-top: 3px;
+  color: #8995a3;
+  font-size: 12px;
+}
+
+/* Tarjetas */
+.filter-card,
+.table-card {
+  border: 1px solid #e9edf2;
+  background: white;
+}
+
+/* Total */
+.total-categories {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  color: #8995a3;
+  font-size: 12px;
+}
+
+.total-categories strong {
+  color: #263648;
+  font-size: 14px;
+}
+
+/* Tabla */
+.table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 13px 16px;
+}
+
+.table-title {
+  color: #263648;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.table-count {
+  margin-left: 9px;
+  color: #8995a3;
+  font-size: 11px;
+}
+
 .table-scroll {
   width: 100%;
   overflow-x: auto;
 }
 
 .categories-table {
-  min-width: 700px;
+  min-width: 760px;
 }
 
 .categories-table :deep(th) {
-  font-size: 12px !important;
+  height: 42px !important;
+  color: #7b8795 !important;
+  background: #f8fafc;
+  font-size: 10px !important;
   font-weight: 700 !important;
   white-space: nowrap;
-  color: rgb(var(--v-theme-on-surface-variant));
 }
 
 .categories-table :deep(td) {
-  font-size: 13px;
+  height: 57px !important;
+  color: #526173;
+  font-size: 11px;
+}
+
+.categories-table :deep(tbody tr:hover) {
+  background: #f8fafc;
+}
+
+.category-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 0;
+}
+
+.category-name {
+  color: #263648;
+  font-size: 11px;
+  font-weight: 600;
 }
 
 .description-cell {
   display: block;
-  max-width: 380px;
+  max-width: 340px;
   overflow: hidden;
+  color: #8995a3;
+  font-size: 11px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+.date-cell {
+  color: #8995a3;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.table-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+/* Paginación */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 11px 16px;
+}
+
+.pagination-info,
+.pagination-page {
+  color: #8995a3;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.limit-select {
+  width: 115px;
+}
+
+/* Estado vacío */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 35px 15px;
+  text-align: center;
+}
+
+.empty-state strong {
+  color: #334155;
+  font-size: 12px;
+}
+
+.empty-state span {
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+/* Diálogos */
+.dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 13px;
+}
+
+.dialog-header h3 {
+  color: #263648;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.dialog-header p {
+  margin-top: 3px;
+  color: #8995a3;
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.dialog-content {
+  padding: 17px 20px;
+}
+
+.dialog-actions {
+  padding: 12px 20px;
+}
+
+.form-section-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* Confirmación */
+.delete-dialog-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 26px 24px 20px;
+  text-align: center;
+}
+
+.delete-dialog-title {
+  color: #263648;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.delete-dialog-description {
+  margin-top: 9px;
+  color: #748195;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.delete-dialog-description strong {
+  color: #263648;
+}
+
+.delete-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 20px;
+}
+
+/* Responsive */
 @media (max-width: 600px) {
-  .categories-table {
-    min-width: 650px;
+  .page-header {
+    align-items: flex-start;
+  }
+
+  .total-categories {
+    justify-content: flex-start;
+    padding-top: 5px;
+  }
+
+  .pagination {
+    padding: 10px 12px;
+  }
+
+  .pagination-info {
+    width: 100%;
+  }
+
+  .pagination-controls {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
+  .dialog-content {
+    padding: 15px;
+  }
+
+  .dialog-header {
+    padding: 14px 15px;
+  }
+
+  .dialog-actions {
+    padding: 10px 15px;
+  }
+
+  .delete-dialog-content {
+    padding: 22px 16px 16px;
+  }
+
+  .delete-dialog-actions {
+    padding: 10px 15px;
   }
 }
 </style>

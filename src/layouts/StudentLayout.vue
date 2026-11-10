@@ -7,7 +7,7 @@
             :permanent="mdAndUp"
             :temporary="!mdAndUp"
             width="255"
-            color="#102F49"
+            color="#080F19"
             class="student-drawer"
             :scrim="!mdAndUp"
         >
@@ -196,7 +196,7 @@ async function handleLogout() {
     width: 100%;
     height: 100vh;
     overflow: hidden;
-    background: #f4f6fa;
+    background: #F4F6FA;
 }
 
 /* Menú lateral */
@@ -241,8 +241,8 @@ async function handleLogout() {
     height: 43px;
     flex-shrink: 0;
     border-radius: 12px;
-    color: #123b5d;
-    background: #f4b323;
+    color: #123B5D;
+    background: #F4B323;
 }
 
 .drawer-brand h2 {
@@ -253,17 +253,17 @@ async function handleLogout() {
 }
 
 .drawer-brand span {
-    color: #a9bac9;
+    color: #A9BAC9;
     font-size: 11px;
 }
 
 .drawer-divider {
-    border-color: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.09);
 }
 
 .menu-label {
     padding: 23px 22px 10px;
-    color: #91a7b9;
+    color: #8190A0;
     font-size: 10px;
     font-weight: 700;
     letter-spacing: 1px;
@@ -278,8 +278,9 @@ async function handleLogout() {
 .navigation-item {
     min-height: 43px;
     margin-bottom: 5px;
-    color: #c3d0dc;
+    color: #AEBAC7;
     font-size: 13px;
+    transition: background 0.2s ease, color 0.2s ease;
 }
 
 .navigation-item :deep(.v-list-item__prepend > .v-icon) {
@@ -292,13 +293,24 @@ async function handleLogout() {
     font-weight: 500;
 }
 
-.navigation-item.v-list-item--active {
+.navigation-item:not(.v-list-item--active):hover {
+    background: rgba(255, 255, 255, 0.08);
     color: white;
-    background: rgba(255, 255, 255, 0.13);
+}
+
+.navigation-item.v-list-item--active {
+    color: #17212B;
+    background: #F4B323;
+    font-weight: 700;
 }
 
 .navigation-item.v-list-item--active :deep(.v-list-item__overlay) {
     opacity: 0;
+}
+
+.navigation-item.v-list-item--active :deep(.v-list-item__prepend > .v-icon) {
+    color: #17212B;
+    opacity: 1;
 }
 
 .drawer-footer {
@@ -311,14 +323,14 @@ async function handleLogout() {
     display: flex;
     align-items: center;
     gap: 9px;
-    color: #b8c9d6;
+    color: #B8C9D6;
     font-size: 12px;
 }
 
 .version-text {
     display: block;
     margin-top: 8px;
-    color: #8199ac;
+    color: #8199AC;
     font-size: 10px;
 }
 
@@ -327,7 +339,7 @@ async function handleLogout() {
     height: 100vh;
     min-height: 0;
     overflow: hidden;
-    background: #f4f6fa;
+    background: #F4F6FA;
 }
 
 .main-container {
@@ -348,14 +360,14 @@ async function handleLogout() {
     min-height: 68px;
     padding: 0 16px;
     background: white;
-    border-bottom: 1px solid #e9edf2;
+    border-bottom: 1px solid #E9EDF2;
     z-index: 2;
 }
 
 .page-heading {
     display: flex;
     align-items: center;
-    color: #1b2533;
+    color: #1B2533;
 }
 
 .breadcrumb {
@@ -366,12 +378,12 @@ async function handleLogout() {
 }
 
 .breadcrumb-parent {
-    color: #8995a3;
+    color: #8995A3;
     font-weight: 400;
 }
 
 .breadcrumb-current {
-    color: #1b2533;
+    color: #1B2533;
     font-weight: 700;
 }
 
@@ -395,7 +407,7 @@ async function handleLogout() {
 }
 
 .user-role {
-    color: #8491a1;
+    color: #8491A1;
     font-size: 10px;
 }
 
@@ -412,7 +424,7 @@ async function handleLogout() {
     overflow-y: auto;
     overscroll-behavior-y: contain;
     scrollbar-width: thin;
-    scrollbar-color: #cbd5e1 transparent;
+    scrollbar-color: #CBD5E1 transparent;
 }
 
 .content-scroll::-webkit-scrollbar {
@@ -420,7 +432,7 @@ async function handleLogout() {
 }
 
 .content-scroll::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
+    background: #CBD5E1;
     border-radius: 10px;
 }
 
@@ -430,6 +442,7 @@ async function handleLogout() {
     padding: 24px;
 }
 
+/* Adaptación móvil */
 @media (max-width: 600px) {
     .student-app-bar {
         padding: 0 10px;

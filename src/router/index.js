@@ -90,6 +90,15 @@ const routes = [
           title: "Historial",
         },
       },
+    {
+      path:"admins",
+      name:"Admins",
+            component: () => import("../views/admins/AdminsView.vue"),
+        meta: {
+          title: "Administradores",
+        },
+
+    },
       {
         path: "reports",
         name: "Reports",

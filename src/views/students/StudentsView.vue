@@ -2,7 +2,7 @@
 <template>
   <div class="page-container">
     <!-- Encabezado -->
-    <div class="d-flex align-center justify-space-between flex-wrap ga-3 mb-6">
+    <div class="page-header d-flex align-center justify-space-between flex-wrap ga-3 mb-6">
       <div>
         <p class="text-body-2 text-medium-emphasis mt-1">
           Administra los estudiantes registrados en la biblioteca.
@@ -12,6 +12,7 @@
       <v-btn
         color="primary"
         prepend-icon="mdi-account-plus-outline"
+        rounded="lg"
         @click="openCreateDialog"
       >
         Nuevo estudiante
@@ -19,14 +20,14 @@
     </div>
 
     <!-- Búsqueda -->
-    <v-card rounded="lg" elevation="0" border class="mb-4">
+    <v-card rounded="lg" elevation="0" border class="filter-card mb-4">
       <v-card-text>
         <v-row align="center">
-          <v-col cols="12" md="6">
+          <v-col cols="12" md="7">
             <v-text-field
               v-model="search"
               label="Buscar estudiante"
-              placeholder="Nombre, documento o usuario..."
+              placeholder="Nombre, documento, código o usuario..."
               prepend-inner-icon="mdi-magnify"
               variant="outlined"
               density="comfortable"
@@ -36,10 +37,10 @@
             />
           </v-col>
 
-          <v-col cols="12" md="6" class="d-flex justify-md-end">
+          <v-col cols="12" md="5" class="d-flex justify-md-end">
             <div class="text-body-2 text-medium-emphasis">
               Total de estudiantes:
-              <strong>{{ total }}</strong>
+              <strong class="text-high-emphasis">{{ total }}</strong>
             </div>
           </v-col>
         </v-row>
@@ -47,7 +48,7 @@
     </v-card>
 
     <!-- Tabla -->
-    <v-card rounded="lg" elevation="0" border>
+    <v-card rounded="lg" elevation="0" border class="table-card">
       <v-data-table
         :headers="headers"
         :items="students"
@@ -59,8 +60,8 @@
         loading-text="Cargando estudiantes..."
       >
         <template #item.full_name="{ item }">
-          <div class="d-flex align-center ga-3 py-1">
-            <v-avatar color="primary" variant="tonal" size="38">
+          <div class="d-flex align-center ga-3 py-2">
+            <v-avatar color="primary" variant="tonal" size="40">
               <span class="font-weight-bold">
                 {{ getInitials(item.full_name) }}
               </span>
@@ -71,10 +72,16 @@
                 {{ item.full_name }}
               </div>
               <div class="text-caption text-medium-emphasis">
-                {{ item.username }}
+                @{{ item.username }}
               </div>
             </div>
           </div>
+        </template>
+
+        <template #item.student_code="{ item }">
+          <span class="font-weight-medium">
+            {{ item.student_code || 'Sin código' }}
+          </span>
         </template>
 
         <template #item.document_number="{ item }">
@@ -82,7 +89,9 @@
         </template>
 
         <template #item.grade="{ item }">
-          {{ item.grade }} - {{ item.group_name }}
+          <v-chip size="small" variant="tonal" color="primary">
+            {{ item.grade }} - {{ item.group_name }}
+          </v-chip>
         </template>
 
         <template #item.email="{ item }">
@@ -103,7 +112,7 @@
 
         <template #item.actions="{ item }">
           <div class="d-flex justify-end ga-1">
-            <v-tooltip text="Editar">
+            <v-tooltip text="Editar estudiante">
               <template #activator="{ props }">
                 <v-btn
                   v-bind="props"
@@ -120,12 +129,14 @@
               <template #activator="{ props }">
                 <v-btn
                   v-bind="props"
-                  :icon="item.is_active ? 'mdi-account-off-outline' : 'mdi-account-check-outline'"
+                  :icon="item.is_active
+                    ? 'mdi-account-off-outline'
+                    : 'mdi-account-check-outline'"
                   size="small"
                   variant="text"
                   :color="item.is_active ? 'error' : 'success'"
                   :loading="changingStatusId === item.id"
-                  @click="toggleStatus(item)"
+                  @click="openStatusDialog(item)"
                 />
               </template>
             </v-tooltip>
@@ -143,7 +154,7 @@
           Mostrando {{ students.length }} de {{ total }} estudiantes
         </div>
 
-        <div class="d-flex align-center ga-3">
+        <div class="d-flex align-center ga-3 flex-wrap">
           <v-select
             v-model="limit"
             :items="[5, 10, 20, 50]"
@@ -169,17 +180,27 @@
     <!-- Modal crear / editar -->
     <v-dialog
       v-model="dialog"
-      max-width="650"
+      max-width="700"
       persistent
       scrollable
     >
       <v-card rounded="lg">
         <v-card-title class="pa-5 pb-2">
-          {{ editingStudent ? 'Editar estudiante' : 'Registrar estudiante' }}
+          <div class="d-flex align-center ga-2">
+            <v-icon color="primary">
+              {{ editingStudent ? 'mdi-account-edit-outline' : 'mdi-account-plus-outline' }}
+            </v-icon>
+
+            {{ editingStudent ? 'Editar estudiante' : 'Registrar estudiante' }}
+          </div>
         </v-card-title>
 
         <v-card-text class="px-5 pt-3">
           <v-form ref="formRef" @submit.prevent="saveStudent">
+            <div class="text-subtitle-2 font-weight-bold mb-3">
+              Información personal
+            </div>
+
             <v-row>
               <v-col cols="12">
                 <v-text-field
@@ -203,6 +224,17 @@
               </v-col>
 
               <v-col cols="12" md="6">
+                <v-text-field
+                  v-model="form.student_code"
+                  label="Código estudiantil"
+                  placeholder="Código asignado por el colegio"
+                  variant="outlined"
+                  :rules="requiredRules"
+                  maxlength="20"
+                />
+              </v-col>
+
+              <v-col cols="12">
                 <v-text-field
                   v-model="form.email"
                   label="Correo electrónico"
@@ -235,14 +267,15 @@
                   maxlength="20"
                 />
               </v-col>
+            </v-row>
 
-              <v-col cols="12">
-                <v-divider class="mb-4" />
-                <div class="text-subtitle-2 font-weight-bold mb-3">
-                  Datos de acceso
-                </div>
-              </v-col>
+            <v-divider class="my-3" />
 
+            <div class="text-subtitle-2 font-weight-bold mb-3">
+              Datos de acceso
+            </div>
+
+            <v-row>
               <v-col cols="12" md="6">
                 <v-text-field
                   v-model="form.username"
@@ -295,10 +328,65 @@
 
           <v-btn
             color="primary"
+            rounded="lg"
             :loading="saving"
             @click="saveStudent"
           >
             {{ editingStudent ? 'Guardar cambios' : 'Registrar estudiante' }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Confirmación de estado -->
+    <v-dialog
+      v-model="statusDialog"
+      max-width="430"
+      persistent
+    >
+      <v-card rounded="lg">
+        <v-card-title class="pa-5 pb-2">
+          <div class="d-flex align-center ga-2">
+            <v-icon :color="studentToChange?.is_active ? 'error' : 'success'">
+              {{ studentToChange?.is_active
+                ? 'mdi-account-off-outline'
+                : 'mdi-account-check-outline' }}
+            </v-icon>
+
+            {{ studentToChange?.is_active ? 'Desactivar estudiante' : 'Activar estudiante' }}
+          </div>
+        </v-card-title>
+
+        <v-card-text class="px-5">
+          <p class="text-body-2 text-medium-emphasis">
+            ¿Estás seguro de que deseas
+            <strong>
+              {{ studentToChange?.is_active ? 'desactivar' : 'activar' }}
+            </strong>
+            a
+            <strong>{{ studentToChange?.full_name }}</strong>?
+          </p>
+        </v-card-text>
+
+        <v-card-actions class="pa-5 pt-0">
+          <v-spacer />
+
+          <v-btn
+            variant="text"
+            color="grey-darken-1"
+            :disabled="changingStatusId !== null"
+            @click="closeStatusDialog"
+          >
+            Cancelar
+          </v-btn>
+
+          <v-btn
+            :color="studentToChange?.is_active ? 'error' : 'success'"
+            rounded="lg"
+            :loading="changingStatusId !== null"
+            @click="confirmToggleStatus"
+          >
+            {{ studentToChange?.is_active ? 'Desactivar' : 'Activar' }}
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -317,7 +405,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, onBeforeUnmount } from 'vue';
 import { studentsService } from '../../services/students';
 
 const students = ref([]);
@@ -332,13 +420,17 @@ const total = ref(0);
 const totalPages = ref(1);
 
 const dialog = ref(false);
+const statusDialog = ref(false);
+
 const formRef = ref(null);
 const editingStudent = ref(null);
+const studentToChange = ref(null);
 const showPassword = ref(false);
 
 const form = reactive({
   full_name: '',
   document_number: '',
+  student_code: '',
   username: '',
   password: '',
   grade: '',
@@ -356,6 +448,7 @@ let searchTimeout = null;
 
 const headers = [
   { title: 'Estudiante', key: 'full_name', sortable: false },
+  { title: 'Código', key: 'student_code', sortable: false },
   { title: 'Documento', key: 'document_number', sortable: false },
   { title: 'Grado / Grupo', key: 'grade', sortable: false },
   { title: 'Correo', key: 'email', sortable: false },
@@ -380,7 +473,8 @@ const passwordRules = [
 
 const emailRules = [
   ...requiredRules,
-  value => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value || '') || 'Ingresa un correo válido.',
+  value => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value || '')
+    || 'Ingresa un correo válido.',
 ];
 
 function showMessage(message, color = 'success') {
@@ -419,6 +513,11 @@ async function loadStudents() {
     students.value = response.data || [];
     total.value = response.total || 0;
     totalPages.value = Math.max(1, response.totalPages || 1);
+
+    if (page.value > totalPages.value) {
+      page.value = totalPages.value;
+      await loadStudents();
+    }
   } catch (error) {
     console.error('Error al cargar estudiantes:', error);
 
@@ -450,6 +549,7 @@ function changeLimit() {
 function resetForm() {
   form.full_name = '';
   form.document_number = '';
+  form.student_code = '';
   form.username = '';
   form.password = '';
   form.grade = '';
@@ -472,6 +572,7 @@ function openEditDialog(student) {
 
   form.full_name = student.full_name || '';
   form.document_number = student.document_number || '';
+  form.student_code = student.student_code || '';
   form.username = student.username || '';
   form.grade = student.grade || '';
   form.group_name = student.group_name || '';
@@ -497,6 +598,7 @@ async function saveStudent() {
   const studentData = {
     full_name: form.full_name.trim(),
     document_number: form.document_number.trim(),
+    student_code: form.student_code.trim(),
     username: form.username.trim(),
     grade: form.grade.trim(),
     group_name: form.group_name.trim(),
@@ -536,15 +638,22 @@ async function saveStudent() {
   }
 }
 
-async function toggleStatus(student) {
-  const action = student.is_active ? 'desactivar' : 'activar';
+function openStatusDialog(student) {
+  studentToChange.value = student;
+  statusDialog.value = true;
+}
 
-  const confirmed = window.confirm(
-    `¿Estás seguro de que deseas ${action} a ${student.full_name}?`,
-  );
+function closeStatusDialog() {
+  if (changingStatusId.value !== null) return;
 
-  if (!confirmed) return;
+  statusDialog.value = false;
+  studentToChange.value = null;
+}
 
+async function confirmToggleStatus() {
+  if (!studentToChange.value) return;
+
+  const student = studentToChange.value;
   changingStatusId.value = student.id;
 
   try {
@@ -553,6 +662,9 @@ async function toggleStatus(student) {
     showMessage(
       `Estudiante ${student.is_active ? 'desactivado' : 'activado'} correctamente.`,
     );
+
+    statusDialog.value = false;
+    studentToChange.value = null;
 
     await loadStudents();
   } catch (error) {
@@ -570,4 +682,42 @@ async function toggleStatus(student) {
 onMounted(() => {
   loadStudents();
 });
+
+onBeforeUnmount(() => {
+  clearTimeout(searchTimeout);
+});
 </script>
+
+<style scoped>
+.page-container {
+  width: 100%;
+}
+
+.page-header {
+  min-height: 55px;
+}
+
+.filter-card,
+.table-card {
+  overflow: hidden;
+}
+
+:deep(.v-data-table thead th) {
+  font-weight: 600 !important;
+  white-space: nowrap;
+}
+
+:deep(.v-data-table tbody tr:hover) {
+  background: rgba(var(--v-theme-primary), 0.035);
+}
+
+@media (max-width: 600px) {
+  .page-header {
+    align-items: flex-start !important;
+  }
+
+  .page-header .v-btn {
+    width: 100%;
+  }
+}
+</style>

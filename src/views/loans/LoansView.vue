@@ -2,9 +2,10 @@
 <template>
   <div class="page-container">
     <!-- Encabezado -->
-    <div class="d-flex align-center justify-space-between flex-wrap ga-3 mb-4">
+    <div class="page-header d-flex align-center justify-space-between flex-wrap ga-3 mb-6">
       <div>
-        <p class="text-body-2 text-medium-emphasis">
+        <h1 class="text-h5 font-weight-bold">Préstamos</h1>
+        <p class="text-body-2 text-medium-emphasis mt-1">
           Registra y consulta los préstamos de la biblioteca.
         </p>
       </div>
@@ -12,7 +13,7 @@
       <v-btn
         color="primary"
         prepend-icon="mdi-plus"
-        size="small"
+        rounded="lg"
         @click="openCreateDialog"
       >
         Registrar préstamo
@@ -20,17 +21,17 @@
     </div>
 
     <!-- Filtros -->
-    <v-card class="mb-4" rounded="lg" elevation="0" border>
-      <v-card-text class="pa-3">
-        <v-row dense align="center">
+    <v-card rounded="lg" elevation="0" border class="filter-card mb-4">
+      <v-card-text>
+        <v-row align="center">
           <v-col cols="12" md="5">
             <v-text-field
               v-model="search"
               label="Buscar préstamo"
-              placeholder="Estudiante, documento, ejemplar o libro"
+              placeholder="Estudiante, documento, ejemplar o libro..."
               prepend-inner-icon="mdi-magnify"
               variant="outlined"
-              density="compact"
+              density="comfortable"
               hide-details
               clearable
               @update:model-value="handleSearch"
@@ -41,9 +42,9 @@
             <v-select
               v-model="statusFilter"
               :items="statusOptions"
-              label="Estado"
+              label="Estado del préstamo"
               variant="outlined"
-              density="compact"
+              density="comfortable"
               hide-details
               @update:model-value="handleStatusFilter"
             />
@@ -55,7 +56,7 @@
               variant="tonal"
               color="primary"
               prepend-icon="mdi-filter-remove"
-              size="small"
+              rounded="lg"
               @click="clearFilters"
             >
               Limpiar filtros
@@ -66,8 +67,8 @@
     </v-card>
 
     <!-- Tabla -->
-    <v-card rounded="lg" elevation="0" border>
-      <div class="d-flex align-center justify-space-between flex-wrap ga-2 px-4 py-3">
+    <v-card rounded="lg" elevation="0" border class="table-card">
+      <div class="d-flex align-center justify-space-between flex-wrap ga-3 px-4 py-4">
         <div>
           <div class="text-subtitle-1 font-weight-bold">
             Préstamos registrados
@@ -83,6 +84,7 @@
           variant="tonal"
           size="small"
         >
+          <v-icon start size="small">mdi-alert-circle-outline</v-icon>
           Préstamos vencidos
         </v-chip>
       </div>
@@ -104,12 +106,18 @@
           @update:options="handleTableOptions"
         >
           <template #item.student="{ item }">
-            <div class="py-2">
-              <div class="font-weight-medium">
-                {{ item.student?.full_name || 'Sin información' }}
-              </div>
-              <div class="text-caption text-medium-emphasis">
-                {{ item.student?.document_number || 'Sin documento' }}
+            <div class="d-flex align-center ga-3 py-2">
+              <v-avatar color="primary" variant="tonal" size="38">
+                <v-icon>mdi-account-outline</v-icon>
+              </v-avatar>
+
+              <div>
+                <div class="font-weight-medium">
+                  {{ item.student?.full_name || 'Sin información' }}
+                </div>
+                <div class="text-caption text-medium-emphasis">
+                  {{ item.student?.document_number || 'Sin documento' }}
+                </div>
               </div>
             </div>
           </template>
@@ -132,10 +140,12 @@
           <template #item.due_date="{ item }">
             <div>
               <span>{{ formatDate(item.due_date) }}</span>
+
               <div
                 v-if="item.status === 'ACTIVE' && isOverdue(item.due_date)"
                 class="text-caption text-error font-weight-medium"
               >
+                <v-icon size="small">mdi-alert-circle-outline</v-icon>
                 Vencido
               </div>
             </div>
@@ -147,30 +157,42 @@
               :color="getStatusColor(item)"
               variant="tonal"
             >
+              <v-icon start size="small">
+                {{ item.status === 'RETURNED'
+                  ? 'mdi-check-circle-outline'
+                  : isOverdue(item.due_date)
+                    ? 'mdi-alert-circle-outline'
+                    : 'mdi-clock-outline' }}
+              </v-icon>
+
               {{ getStatusLabel(item) }}
             </v-chip>
           </template>
 
           <template #item.actions="{ item }">
-            <v-tooltip text="Ver detalles">
-              <template #activator="{ props }">
-                <v-btn
-                  v-bind="props"
-                  icon="mdi-eye-outline"
-                  size="small"
-                  variant="text"
-                  color="primary"
-                  @click="openDetails(item)"
-                />
-              </template>
-            </v-tooltip>
+            <div class="d-flex justify-center">
+              <v-tooltip text="Ver detalles">
+                <template #activator="{ props }">
+                  <v-btn
+                    v-bind="props"
+                    icon="mdi-eye-outline"
+                    size="small"
+                    variant="text"
+                    color="primary"
+                    @click="openDetails(item)"
+                  />
+                </template>
+              </v-tooltip>
+            </div>
           </template>
 
           <template #bottom>
-            <div class="d-flex align-center justify-space-between flex-wrap pa-3 ga-3">
-              <span class="text-caption text-medium-emphasis">
+            <v-divider />
+
+            <div class="d-flex align-center justify-space-between flex-wrap pa-4 ga-3">
+              <div class="text-body-2 text-medium-emphasis">
                 {{ total }} préstamo(s) encontrado(s)
-              </span>
+              </div>
 
               <v-pagination
                 v-if="totalPages > 1"
@@ -194,28 +216,22 @@
       scrollable
     >
       <v-card rounded="lg">
-        <v-card-title class="d-flex align-center justify-space-between pa-4">
-          <span class="text-subtitle-1 font-weight-bold">
+        <v-card-title class="pa-5 pb-3">
+          <div class="d-flex align-center ga-2">
+            <v-icon color="primary">mdi-book-plus-outline</v-icon>
             Registrar préstamo
-          </span>
-
-          <v-btn
-            icon="mdi-close"
-            variant="text"
-            size="small"
-            :disabled="saving"
-            @click="closeCreateDialog"
-          />
+          </div>
         </v-card-title>
 
         <v-divider />
 
-        <v-card-text class="pa-4">
+        <v-card-text class="pa-5">
           <v-alert
             type="info"
             variant="tonal"
-            density="compact"
-            class="mb-4"
+            density="comfortable"
+            rounded="lg"
+            class="mb-5"
           >
             Solo se pueden prestar ejemplares disponibles.
             Cada estudiante puede tener máximo 8 préstamos activos.
@@ -230,7 +246,7 @@
               item-value="document_number"
               label="Estudiante"
               placeholder="Buscar por nombre o documento"
-              prepend-inner-icon="mdi-account-search"
+              prepend-inner-icon="mdi-account-search-outline"
               variant="outlined"
               density="comfortable"
               :rules="[rules.required]"
@@ -246,7 +262,7 @@
               item-value="id"
               label="Ejemplar disponible"
               placeholder="Buscar por título o código"
-              prepend-inner-icon="mdi-book-open-page-variant"
+              prepend-inner-icon="mdi-book-open-page-variant-outline"
               variant="outlined"
               density="comfortable"
               :rules="[rules.required]"
@@ -257,8 +273,8 @@
             <v-text-field
               v-model.number="form.loan_days"
               label="Duración del préstamo"
-              placeholder="Escribe la cantidad de días"
-              prepend-inner-icon="mdi-calendar-clock"
+              placeholder="Cantidad de días"
+              prepend-inner-icon="mdi-calendar-clock-outline"
               suffix="días"
               type="number"
               min="1"
@@ -266,7 +282,7 @@
               variant="outlined"
               density="comfortable"
               :rules="[rules.required, rules.positiveInteger]"
-              hint="El administrador puede establecer la duración que necesite."
+              hint="Puedes establecer la duración del préstamo."
               persistent-hint
             />
           </v-form>
@@ -274,11 +290,12 @@
 
         <v-divider />
 
-        <v-card-actions class="pa-4">
+        <v-card-actions class="pa-5">
           <v-spacer />
 
           <v-btn
             variant="text"
+            color="grey-darken-1"
             :disabled="saving"
             @click="closeCreateDialog"
           >
@@ -287,6 +304,7 @@
 
           <v-btn
             color="primary"
+            rounded="lg"
             prepend-icon="mdi-check"
             :loading="saving"
             @click="createLoan"
@@ -297,13 +315,17 @@
       </v-card>
     </v-dialog>
 
-    <!-- Detalles -->
-    <v-dialog v-model="detailsDialog" max-width="550">
-      <v-card rounded="lg" v-if="selectedLoan">
-        <v-card-title class="d-flex align-center justify-space-between pa-4">
-          <span class="text-subtitle-1 font-weight-bold">
+    <!-- Detalles del préstamo -->
+    <v-dialog
+      v-model="detailsDialog"
+      max-width="550"
+    >
+      <v-card v-if="selectedLoan" rounded="lg">
+        <v-card-title class="d-flex align-center justify-space-between pa-5">
+          <div class="d-flex align-center ga-2">
+            <v-icon color="primary">mdi-book-information-variant</v-icon>
             Detalle del préstamo
-          </span>
+          </div>
 
           <v-btn
             icon="mdi-close"
@@ -315,8 +337,8 @@
 
         <v-divider />
 
-        <v-card-text class="pa-4">
-          <div class="d-flex align-center justify-space-between mb-4">
+        <v-card-text class="pa-5">
+          <div class="d-flex align-center justify-space-between flex-wrap ga-2 mb-5">
             <span class="text-body-2 text-medium-emphasis">
               Préstamo #{{ selectedLoan.id }}
             </span>
@@ -330,6 +352,11 @@
             </v-chip>
           </div>
 
+          <div class="detail-section-title">
+            <v-icon size="small">mdi-account-outline</v-icon>
+            Información del estudiante
+          </div>
+
           <div class="detail-item">
             <span>Estudiante</span>
             <strong>{{ selectedLoan.student?.full_name || 'N/A' }}</strong>
@@ -340,7 +367,12 @@
             <strong>{{ selectedLoan.student?.document_number || 'N/A' }}</strong>
           </div>
 
-          <v-divider class="my-3" />
+          <v-divider class="my-4" />
+
+          <div class="detail-section-title">
+            <v-icon size="small">mdi-book-outline</v-icon>
+            Información del ejemplar
+          </div>
 
           <div class="detail-item">
             <span>Libro</span>
@@ -352,7 +384,12 @@
             <strong>{{ selectedLoan.copy?.copy_code || 'N/A' }}</strong>
           </div>
 
-          <v-divider class="my-3" />
+          <v-divider class="my-4" />
+
+          <div class="detail-section-title">
+            <v-icon size="small">mdi-calendar-outline</v-icon>
+            Fechas del préstamo
+          </div>
 
           <div class="detail-item">
             <span>Fecha del préstamo</span>
@@ -374,23 +411,34 @@
 
           <div
             v-if="selectedLoan.return_notes"
-            class="mt-3"
+            class="mt-4"
           >
-            <div class="text-caption text-medium-emphasis mb-1">
+            <div class="text-caption text-medium-emphasis mb-2">
               Observaciones de devolución
             </div>
-            <p class="text-body-2">{{ selectedLoan.return_notes }}</p>
+
+            <v-card
+              color="surface"
+              variant="tonal"
+              rounded="lg"
+              class="pa-3"
+            >
+              <p class="text-body-2">
+                {{ selectedLoan.return_notes }}
+              </p>
+            </v-card>
           </div>
         </v-card-text>
 
         <v-divider />
 
-        <v-card-actions class="pa-3">
+        <v-card-actions class="pa-4">
           <v-spacer />
+
           <v-btn
             color="primary"
             variant="tonal"
-            size="small"
+            rounded="lg"
             @click="detailsDialog = false"
           >
             Cerrar
@@ -404,7 +452,7 @@
       v-model="snackbar.show"
       :color="snackbar.color"
       timeout="3500"
-      location="top right"
+      location="bottom end"
     >
       {{ snackbar.message }}
     </v-snackbar>
@@ -438,6 +486,7 @@ const statusFilter = ref('ALL');
 
 const createDialog = ref(false);
 const detailsDialog = ref(false);
+
 const selectedLoan = ref(null);
 const formRef = ref(null);
 
@@ -599,8 +648,8 @@ async function loadStudents() {
     students.value = response.data || [];
 
     studentOptions.value = students.value
-      .filter((student) => student.is_active)
-      .map((student) => ({
+      .filter(student => student.is_active)
+      .map(student => ({
         ...student,
         display: `${student.full_name} - ${student.document_number}`,
       }));
@@ -628,7 +677,7 @@ async function loadAvailableCopies() {
 
     copies.value = response.data || [];
 
-    copyOptions.value = copies.value.map((copy) => ({
+    copyOptions.value = copies.value.map(copy => ({
       ...copy,
       display: `${copy.book?.title || 'Libro sin título'} | ${copy.copy_code}`,
     }));
@@ -776,6 +825,19 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.page-container {
+  width: 100%;
+}
+
+.page-header {
+  min-height: 55px;
+}
+
+.filter-card,
+.table-card {
+  overflow: hidden;
+}
+
 .table-scroll {
   width: 100%;
   overflow-x: auto;
@@ -783,6 +845,25 @@ onUnmounted(() => {
 
 .table-scroll :deep(table) {
   min-width: 850px;
+}
+
+:deep(.v-data-table thead th) {
+  font-weight: 600 !important;
+  white-space: nowrap;
+}
+
+:deep(.v-data-table tbody tr:hover) {
+  background: rgba(var(--v-theme-primary), 0.035);
+}
+
+.detail-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: rgb(var(--v-theme-primary));
 }
 
 .detail-item {
@@ -804,9 +885,18 @@ onUnmounted(() => {
   text-align: right;
   font-size: 0.875rem;
   font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
 @media (max-width: 600px) {
+  .page-header {
+    align-items: flex-start !important;
+  }
+
+  .page-header .v-btn {
+    width: 100%;
+  }
+
   .detail-item {
     gap: 10px;
   }
